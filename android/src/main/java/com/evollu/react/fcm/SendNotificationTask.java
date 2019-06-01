@@ -272,6 +272,7 @@ public class SendNotificationTask extends AsyncTask<Void, Void, Void> {
                             actionIntent = new Intent(mContext, FIRBroadcastReceiver.class);
                             actionIntent.putExtras(bundle);
                             actionIntent.putExtra("_actionIdentifier", actionId);
+                            actionIntent.putExtra("_actionHeadless", true);
                             pendingActionIntent = PendingIntent.getBroadcast (mContext, notificationID,
                                     actionIntent, 0);  // PendingIntent.FLAG_UPDATE_CURRENT
                         }else{
