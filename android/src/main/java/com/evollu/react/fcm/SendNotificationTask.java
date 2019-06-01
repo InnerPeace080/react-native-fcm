@@ -229,7 +229,6 @@ public class SendNotificationTask extends AsyncTask<Void, Void, Void> {
             if (bundle.getBoolean("lights")) {
                 notification.setDefaults(NotificationCompat.DEFAULT_LIGHTS);
             }
-
             if(bundle.containsKey("fire_date")) {
                 Log.d(TAG, "broadcast intent if it is a scheduled notification");
                 Intent i = new Intent("com.evollu.react.fcm.ReceiveLocalNotification");
@@ -267,16 +266,24 @@ public class SendNotificationTask extends AsyncTask<Void, Void, Void> {
                         if (action.hasKey("icon")){
                             actionIcon = action.getString("icon");
                         }
-//                        Intent actionIntent = new Intent();
-//                        actionIntent.setClassName(mContext, intentClassName);
-//                        actionIntent.setAction("com.evollu.react.fcm." + actionId + "_ACTION");
-                        Intent actionIntent = new Intent(mContext, FIRBroadcastReceiver.class);
-                        actionIntent.putExtras(bundle);
-                        actionIntent.putExtra("_actionIdentifier", actionId);
-//                        actionIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-//                        getApplicationContext().startService(service);
-                        PendingIntent pendingActionIntent = PendingIntent.getBroadcast (mContext, notificationID,
-                                actionIntent, 0);  // PendingIntent.FLAG_UPDATE_CURRENT
+                        Intent actionIntent;
+                        PendingIntent pendingActionIntent;
+                        if (action.hasKey("headless") && action.getBoolean("headless")){
+                            actionIntent = new Intent(mContext, FIRBroadcastReceiver.class);
+                            actionIntent.putExtras(bundle);
+                            actionIntent.putExtra("_actionIdentifier", actionId);
+                            pendingActionIntent = PendingIntent.getBroadcast (mContext, notificationID,
+                                    actionIntent, 0);  // PendingIntent.FLAG_UPDATE_CURRENT
+                        }else{
+                            actionIntent = new Intent();
+                            actionIntent.setClassName(mContext, intentClassName);
+                            actionIntent.setAction("com.evollu.react.fcm." + actionId + "_ACTION");
+                            actionIntent.putExtras(bundle);
+                            actionIntent.putExtra("_actionIdentifier", actionId);
+                            actionIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                            pendingActionIntent = PendingIntent.getActivity(mContext, notificationID, actionIntent,
+                                    PendingIntent.FLAG_UPDATE_CURRENT);
+                        }
 
                         int actionIconResId = res.getIdentifier(actionIcon, "mipmap", packageName);
                         if(actionIconResId == 0){
