@@ -34,10 +34,13 @@ import android.util.Log;
 import android.content.Context;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import com.google.firebase.FirebaseApp;
+
+import org.json.JSONObject;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 
@@ -45,9 +48,21 @@ public class FIRMessagingModule extends ReactContextBaseJavaModule implements Li
     private final static String TAG = FIRMessagingModule.class.getCanonicalName();
     private FIRLocalMessagingHelper mFIRLocalMessagingHelper;
     private BadgeHelper mBadgeHelper;
-
+    Intent mIntent;
     public FIRMessagingModule(ReactApplicationContext reactContext) {
         super(reactContext);
+
+        mFIRLocalMessagingHelper = new FIRLocalMessagingHelper((Application) reactContext.getApplicationContext());
+        mBadgeHelper = new BadgeHelper(reactContext.getApplicationContext());
+        getReactApplicationContext().addLifecycleEventListener(this);
+        getReactApplicationContext().addActivityEventListener(this);
+        registerTokenRefreshHandler();
+        registerMessageHandler();
+        registerLocalMessageHandler();
+    }
+    public FIRMessagingModule(ReactApplicationContext reactContext,Intent intent) {
+        super(reactContext);
+        mIntent = intent;
         mFIRLocalMessagingHelper = new FIRLocalMessagingHelper((Application) reactContext.getApplicationContext());
         mBadgeHelper = new BadgeHelper(reactContext.getApplicationContext());
         getReactApplicationContext().addLifecycleEventListener(this);
@@ -62,11 +77,33 @@ public class FIRMessagingModule extends ReactContextBaseJavaModule implements Li
         return "RNFIRMessaging";
     }
 
+    @Override
+    public Map<String, Object> getConstants() {
+        final Map<String, Object> constants = new HashMap<>();
+        try {
+            if (getCurrentActivity() != null) {
+                WritableMap params = parseIntent(getCurrentActivity().getIntent());
+                JSONObject paramsJson = ReactNativeJson.convertMapToJson(params);
+                constants.put("paramsJson", paramsJson.toString());
+            }else if(mIntent != null){
+                WritableMap params = parseIntent(mIntent);
+                JSONObject paramsJson = ReactNativeJson.convertMapToJson(params);
+                constants.put("paramsJson", paramsJson.toString());
+            }
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+        return constants;
+    }
+
     @ReactMethod
     public void getInitialNotification(Promise promise){
         Activity activity = getCurrentActivity();
         if(activity == null){
             promise.resolve(null);
+            return;
+        }else if(mIntent != null){
+            promise.resolve(parseIntent(mIntent));
             return;
         }
         promise.resolve(parseIntent(activity.getIntent()));
@@ -399,5 +436,16 @@ public class FIRMessagingModule extends ReactContextBaseJavaModule implements Li
     @Override
     public void onNewIntent(Intent intent){
         sendEvent("FCMNotificationReceived", parseIntent(intent));
+    }
+
+    @ReactMethod
+    public void stopService() {
+        if (mIntent != null) {
+          new android.os.Handler().postDelayed(new Runnable() {
+              public void run() {
+                getReactApplicationContext().stopService(mIntent);
+              }
+          }, 1000);
+        }
     }
 }

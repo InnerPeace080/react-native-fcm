@@ -220,6 +220,14 @@ FCM.setNotificationCategories = (categories) => {
   }
 }
 
+FCM.stopService = ()=>{
+  if (Platform.OS === 'android') {
+    RNFIRMessaging.stopService()
+  }
+}
+
+FCM.paramsJson = RNFIRMessaging.paramsJson
+
 export default FCM;
 
 export {};

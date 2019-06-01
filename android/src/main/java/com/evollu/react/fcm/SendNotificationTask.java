@@ -263,16 +263,28 @@ public class SendNotificationTask extends AsyncTask<Void, Void, Void> {
                         ReadableMap action = actions.getMap(a);
                         String actionTitle = action.getString("title");
                         String actionId = action.getString("id");
-                        Intent actionIntent = new Intent();
-                        actionIntent.setClassName(mContext, intentClassName);
-                        actionIntent.setAction("com.evollu.react.fcm." + actionId + "_ACTION");
+                        String actionIcon = "";
+                        if (action.hasKey("icon")){
+                            actionIcon = action.getString("icon");
+                        }
+//                        Intent actionIntent = new Intent();
+//                        actionIntent.setClassName(mContext, intentClassName);
+//                        actionIntent.setAction("com.evollu.react.fcm." + actionId + "_ACTION");
+                        Intent actionIntent = new Intent(mContext, FIRBroadcastReceiver.class);
                         actionIntent.putExtras(bundle);
                         actionIntent.putExtra("_actionIdentifier", actionId);
-                        actionIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                        PendingIntent pendingActionIntent = PendingIntent.getActivity(mContext, notificationID, actionIntent,
-                                PendingIntent.FLAG_UPDATE_CURRENT);
+//                        actionIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+//                        getApplicationContext().startService(service);
+                        PendingIntent pendingActionIntent = PendingIntent.getBroadcast (mContext, notificationID,
+                                actionIntent, 0);  // PendingIntent.FLAG_UPDATE_CURRENT
 
-                        notification.addAction(0, actionTitle, pendingActionIntent);
+                        int actionIconResId = res.getIdentifier(actionIcon, "mipmap", packageName);
+                        if(actionIconResId == 0){
+                            actionIconResId = res.getIdentifier(actionIcon, "drawable", packageName);
+                        }
+
+                        notification.addAction(actionIconResId, actionTitle, pendingActionIntent);
+//                        android.R.drawable.ic_delete
                     }
                 }
 
