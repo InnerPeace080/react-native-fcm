@@ -18,10 +18,15 @@ public class FIRBroadcastReceiver extends BroadcastReceiver {
         Intent newIntent = new Intent(context, BackgroundService.class);
         newIntent.putExtras(intent.getExtras());
 //        context.startService(newIntent);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(newIntent);
-        } else {
-            context.startService(newIntent);
+        try{
+          context.startService(newIntent);
+        }catch(Exception e){
+          e.printStackTrace();
         }
+        // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        //     context.startForegroundService(newIntent);
+        // } else {
+        //     context.startService(newIntent);
+        // }
     }
 }
